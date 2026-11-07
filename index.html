@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#182238"><title>runners</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="game" aria-label="runners game">
+  <canvas id="world" aria-label="A runner dodging traffic"></canvas>
+  <div class="top-left-ui"><div class="currency" aria-live="polite"><img class="coin-image" src="assets/ui/coin.gif" alt=""><span id="coins">0</span></div>
+  <button class="index-button" id="openIndex" aria-label="Open runner and car index" title="Index"><span class="index-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button></div>
+  <div class="toast" id="toast" aria-live="polite"><span class="toast-rarity"></span><span class="toast-name"></span><small class="toast-detail"></small></div>
+  <button class="sound" id="sound" aria-label="Toggle sound" title="Toggle sound">♫</button>
+  <section class="index-overlay" id="indexOverlay" aria-label="Collection index" aria-modal="true" role="dialog" hidden>
+    <div class="index-window">
+      <header class="index-header"><h1>INDEX</h1><button class="index-close" id="closeIndex" aria-label="Close index">X</button></header>
+      <nav class="index-tabs" aria-label="Collection type">
+        <button class="index-tab active" data-tab="runners" aria-selected="true">RUNNERS</button>
+        <button class="index-tab" data-tab="cars" aria-selected="false">CARS</button>
+      </nav>
+      <div class="index-content" id="indexContent"></div>
+    </div>
+  </section>
+</main>
+<script src="assets/frames.js"></script><script src="roster.js"></script><script src="game.js"></script>
+</body></html>
