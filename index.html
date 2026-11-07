@@ -10,7 +10,7 @@
 <main class="game" aria-label="runners game">
   <canvas id="world" aria-label="A runner dodging traffic"></canvas>
   <div class="top-left-ui"><div class="currency" aria-live="polite"><img class="coin-image" src="assets/ui/coin.gif" alt=""><span id="coins">0</span></div>
-  <button class="index-button" id="openIndex" aria-label="Open runner and car index" title="Index"><span class="index-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button></div>
+  <button class="index-button" id="openIndex" aria-label="Open runner and car index" title="Index"><span class="index-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button><button class="updates-button" id="openUpdates" aria-label="Open updates" title="Updates">LOG</button></div>
   <div class="toast" id="toast" aria-live="polite"><span class="toast-rarity"></span><span class="toast-name"></span><small class="toast-detail"></small></div>
   <button class="sound" id="sound" aria-label="Toggle sound" title="Toggle sound">♫</button>
   <section class="index-overlay" id="indexOverlay" aria-label="Collection index" aria-modal="true" role="dialog" hidden>
@@ -21,6 +21,12 @@
         <button class="index-tab" data-tab="cars" aria-selected="false">CARS</button>
       </nav>
       <div class="index-content" id="indexContent"></div>
+    </div>
+  </section>
+  <section class="index-overlay" id="updatesOverlay" aria-label="Game updates" aria-modal="true" role="dialog" hidden>
+    <div class="index-window updates-window">
+      <header class="index-header"><h1>UPDATES</h1><button class="index-close" id="closeUpdates" aria-label="Close updates">X</button></header>
+      <div class="updates-content" id="updatesContent"></div>
     </div>
   </section>
 </main>

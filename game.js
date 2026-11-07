@@ -10,6 +10,7 @@
   const runners=loadPool(roster.runners,'runners'),cars=loadPool(roster.cars,'cars');
   const coinsEl=document.querySelector('#coins'),toast=document.querySelector('#toast'),soundButton=document.querySelector('#sound'),currencyElement=document.querySelector('.currency');
   const indexOverlay=document.querySelector('#indexOverlay'),indexContent=document.querySelector('#indexContent'),indexButton=document.querySelector('#openIndex');
+  const updatesOverlay=document.querySelector('#updatesOverlay'),updatesContent=document.querySelector('#updatesContent'),updatesButton=document.querySelector('#openUpdates');let updatesOpen=false;
   const saved=(()=>{try{return JSON.parse(localStorage.getItem('road-runners-save'))||{coins:0,unlocked:['runner']}}catch{return {coins:0,unlocked:['runner']}}})();
   if(!Array.isArray(saved.unlocked))saved.unlocked=['runner'];
   if(!Array.isArray(saved.unlockedCars))saved.unlockedCars=[];
@@ -45,8 +46,16 @@
   function setIndex(open){indexOpen=open;indexOverlay.hidden=!open;if(open)renderIndex()}
   indexButton.addEventListener('click',()=>setIndex(true));
   document.querySelector('#closeIndex').addEventListener('click',()=>setIndex(false));
+  function renderUpdates(){
+    updatesContent.replaceChildren();
+    const groups=[['RUNNERS',roster.runners.filter(item=>['uranium','naruto','mummy','monka','masterchief','hurried','goblin'].includes(item.id)),'runners'],['CARS',roster.cars.filter(item=>['xpp','kitty','clown','carbert'].includes(item.id)),'cars']];
+    for(const [title,items,folder] of groups){const section=document.createElement('section');section.className='updates-section';const heading=document.createElement('h2');heading.className='updates-heading';heading.textContent=title;section.append(heading);const grid=document.createElement('div');grid.className='updates-grid';for(const item of items){const row=document.createElement('div');row.className='updates-item';const image=document.createElement('img');image.src=`assets/${folder}/${item.file}`;image.alt='';const name=document.createElement('span');name.textContent=item.name;row.append(image,name);grid.append(row)}section.append(grid);updatesContent.append(section)}
+    const fixes=document.createElement('section');fixes.className='updates-section';const heading=document.createElement('h2');heading.className='updates-heading';heading.textContent='FIXES';fixes.append(heading);for(const line of ['Eyes stay attached.','Eyes fade smoothly.','Walking sound follows speed.']){const row=document.createElement('p');row.className='updates-fix';row.textContent=line;fixes.append(row)}updatesContent.append(fixes);
+  }
+  updatesButton.addEventListener('click',()=>{renderUpdates();updatesOpen=true;updatesOverlay.hidden=false});
+  document.querySelector('#closeUpdates').addEventListener('click',()=>{updatesOpen=false;updatesOverlay.hidden=true});
   for(const tab of document.querySelectorAll('.index-tab'))tab.addEventListener('click',()=>{indexTab=tab.dataset.tab;for(const item of document.querySelectorAll('.index-tab')){const active=item===tab;item.classList.toggle('active',active);item.setAttribute('aria-selected',String(active))}renderIndex()});
-  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&indexOpen)setIndex(false)});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&indexOpen)setIndex(false);if(event.key==='Escape'&&updatesOpen){updatesOpen=false;updatesOverlay.hidden=true}});
   function popToast(item,detail,pool,coinValue=0){toast.querySelector('.toast-rarity').textContent=item.rarity.toUpperCase();toast.querySelector('.toast-name').textContent=item.name;toast.querySelector('.toast-detail').textContent=`${odds(item,pool)}\n${detail}`;toast.style.borderTopColor=({Common:'#b6c4d7',Uncommon:'#7de3b0',Rare:'#72c6ff',Epic:'#c69cff',Legendary:'#ffd36c',Mythic:'#ff7b95'})[item.rarity]||'#fff';toast.classList.add('show');toastTimer=2.6;playRaritySound(item);if(coinValue>0)queueToastCoins(coinValue)}
   const pitch=()=>.84+Math.random()*.34;
   function variedSpeed(base){
