@@ -57,14 +57,14 @@
   }
   const sounds={
     engine:new Audio('assets/audio/engineLoop.mp3'),
-    running:new Audio('assets/audio/runningLoop.mp3'),
+    running:new Audio('assets/audio/walkingLoop.mp3'),
     music:new Audio('assets/audio/music.mp3')
   };
   const loopVolumes={engine:.13,running:.10,music:.08},loopStates={};
   for(const [key,audio] of Object.entries(sounds)){audio.loop=true;audio.volume=0;loopStates[key]={target:null,animation:0};}
-  for(const audio of Object.values(sounds)){
+  for(const [key,audio] of Object.entries(sounds)){
     let previous=0;
-    audio.addEventListener('timeupdate',()=>{if(audio.currentTime+.15<previous)audio.playbackRate=pitch();previous=audio.currentTime});
+    audio.addEventListener('timeupdate',()=>{if(key!=='running'&&audio.currentTime+.15<previous)audio.playbackRate=pitch();previous=audio.currentTime});
   }
   function fadeLoop(key,shouldPlay){
     const audio=sounds[key],state=loopStates[key],target=shouldPlay?loopVolumes[key]:0;
@@ -77,7 +77,9 @@
     state.animation=requestAnimationFrame(ramp);
   }
   function syncLoops(){
-    const needs={engine:carsOnRoad.length>0,running:runnersOnRoad.some(r=>!r.hit),music:true};
+    const walkers=runnersOnRoad.filter(r=>!r.hit),averageWalkSpeed=walkers.length?walkers.reduce((sum,r)=>sum+Math.abs(r.vx),0)/walkers.length:245;
+    sounds.running.playbackRate=Math.max(.75,Math.min(1.55,averageWalkSpeed/245));
+    const needs={engine:carsOnRoad.length>0,running:walkers.length>0,music:true};
     for(const key of Object.keys(sounds))fadeLoop(key,soundOn&&audioReady&&needs[key]);
   }
   function effect(file,volume,force=false){if((!soundOn&&!force)||!audioReady)return;const audio=new Audio(`assets/audio/${file}`);audio.volume=volume;audio.playbackRate=pitch();audio.play().catch(()=>{});audio.addEventListener('ended',()=>audio.remove(),{once:true})}
