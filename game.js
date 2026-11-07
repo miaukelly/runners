@@ -81,7 +81,7 @@
     for(const key of Object.keys(sounds))fadeLoop(key,soundOn&&audioReady&&needs[key]);
   }
   function effect(file,volume,force=false){if((!soundOn&&!force)||!audioReady)return;const audio=new Audio(`assets/audio/${file}`);audio.volume=volume;audio.playbackRate=pitch();audio.play().catch(()=>{});audio.addEventListener('ended',()=>audio.remove(),{once:true})}
-  function playRaritySound(item){effect(item.rarity==='Common'||item.rarity==='Uncommon'?'commonItem.mp3':'goodItem.mp3',.42)}
+  function playRaritySound(item){effect(item.rarity==='Common'||item.rarity==='Uncommon'?'common.mp3':'goodItem.mp3',.42)}
   document.addEventListener('click',event=>{const button=event.target.closest('.game button');if(!button)return;audioReady=true;const turningSoundOn=button===soundButton&&!soundOn;if(soundOn||turningSoundOn)effect('commonItem.mp3',.22,true)},true);
   function queueToastCoins(amount){
     const toastBounds=toast.getBoundingClientRect(),canvasBounds=canvas.getBoundingClientRect(),startX=(toastBounds.left+toastBounds.width/2-canvasBounds.left)*W/canvasBounds.width,startY=(toastBounds.bottom-canvasBounds.top)*H/canvasBounds.height;
