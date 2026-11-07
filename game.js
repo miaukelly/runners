@@ -132,18 +132,32 @@
       }
     }
   }
-  function drawSkeletonEyes(actor){
-    if(!eyesImage.complete||!eyesImage.naturalWidth)return;
-    const drawWidth=Math.min(46,actor.width*.4),drawHeight=drawWidth*eyesImage.naturalHeight/eyesImage.naturalWidth;
-    const centerX=actor.x+actor.width*(actor.dir>0?.73:.27),centerY=actor.y+actor.height*.17;
-    ctx.drawImage(eyesImage,centerX-drawWidth/2,centerY-drawHeight/2,drawWidth,drawHeight);
+  const eyeAnchors={runner:[.70,.18],speedster:[.66,.17],santa:[.63,.16],satan:[.66,.17]};
+  const alphaBounds=new WeakMap(),boundsCanvas=document.createElement('canvas'),boundsCtx=boundsCanvas.getContext('2d',{willReadFrequently:true});
+  function getSpriteBounds(image){
+    if(!image?.complete||!image.naturalWidth)return null;
+    if(alphaBounds.has(image))return alphaBounds.get(image);
+    const w=image.naturalWidth,h=image.naturalHeight;boundsCanvas.width=w;boundsCanvas.height=h;boundsCtx.clearRect(0,0,w,h);
+    try{boundsCtx.drawImage(image,0,0);const pixels=boundsCtx.getImageData(0,0,w,h).data;let left=w,top=h,right=-1,bottom=-1;
+      for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(pixels[(y*w+x)*4+3]>24){if(x<left)left=x;if(x>right)right=x;if(y<top)top=y;if(y>bottom)bottom=y}
+      const bounds=right<left?null:{left,top,width:right-left+1,height:bottom-top+1};alphaBounds.set(image,bounds);return bounds;
+    }catch{return null}
   }
   function drawPacedEyes(actor,kind,now){
     if(!actor.eyesUntil||now>actor.eyesUntil||!eyesImage.complete||!eyesImage.naturalWidth)return;
     const clamp=value=>Math.max(0,Math.min(1,value)),fadeIn=1-Math.pow(1-clamp((now-actor.eyesStart)/150),3),fadeOut=1-Math.pow(1-clamp((actor.eyesUntil-now)/380),3),alpha=Math.min(fadeIn,fadeOut);
-    const targetWidth=kind==='car'?actor.w:actor.width,drawWidth=Math.min(72,Math.max(38,targetWidth*.42)),drawHeight=drawWidth*eyesImage.naturalHeight/eyesImage.naturalWidth;
-    const centerX=kind==='car'?actor.x+actor.w/2:actor.x+actor.width/2,centerY=kind==='car'?actor.drawY+actor.h*.32:actor.y+actor.height*.3;
-    ctx.save();ctx.globalAlpha=alpha;ctx.drawImage(eyesImage,centerX-drawWidth/2,centerY-drawHeight/2,drawWidth,drawHeight);ctx.restore();
+    let x,y,boxWidth,boxHeight;
+    if(kind==='runner'){
+      const source=actor.type.frames?.[0]||actor.type.img,bounds=getSpriteBounds(source),preset=eyeAnchors[actor.type.id];
+      x=preset?.[0]??(bounds?(bounds.left+bounds.width*.71)/source.naturalWidth:.69);y=preset?.[1]??(bounds?(bounds.top+bounds.height*.17)/source.naturalHeight:.18);
+      const flipped=Boolean(actor.type.flip)!==(actor.dir<0);if(flipped)x=1-x;
+      boxWidth=actor.width;boxHeight=actor.height;
+    }else{
+      x=actor.dir>0?.78:.22;y=.34;boxWidth=actor.w;boxHeight=actor.h;
+    }
+    const drawWidth=Math.min(kind==='car'?64:58,Math.max(28,boxWidth*(kind==='car'?.29:.34))),drawHeight=drawWidth*eyesImage.naturalHeight/eyesImage.naturalWidth;
+    const cx=(kind==='car'?actor.x:actor.x)+boxWidth*x,cy=(kind==='car'?actor.drawY:actor.y)+boxHeight*y;
+    ctx.save();ctx.globalAlpha=alpha;ctx.translate(cx,cy);if(kind==='runner'&&actor.angle)ctx.rotate(actor.angle);ctx.drawImage(eyesImage,-drawWidth/2,-drawHeight/2,drawWidth,drawHeight);ctx.restore();
   }
   function hit(r,c){return r.x+r.width*.68>c.x+26&&r.x+r.width*.22<c.x+c.w-20&&Math.abs((r.y+r.height*.65)-(c.drawY+c.h*.58))<60}
   function reward(item){return item.rarity==='Common'?5:item.rarity==='Uncommon'?9:item.rarity==='Rare'?16:item.rarity==='Epic'?28:item.rarity==='Legendary'?60:120}
@@ -211,7 +225,7 @@
         drawPacedEyes(actor,'car',now);drawSpeedLabel(actor,actor.x+actor.w/2,actor.drawY+12,now);
       }else if(kind==='runner'){
         const rw=actor.width,rh=actor.height;ctx.save();ctx.translate(actor.x+rw/2,actor.y+rh/2);ctx.rotate(actor.angle);if(Boolean(actor.type.flip)!==(actor.dir<0))ctx.scale(-1,1);const im=imageAt(actor.type,now);if(im?.complete&&im.naturalWidth)ctx.drawImage(im,-rw/2,-rh/2,rw,rh);ctx.restore();
-        if(actor.type.id==='skeleton')drawSkeletonEyes(actor);drawPacedEyes(actor,'runner',now);drawSpeedLabel(actor,actor.x+rw/2,actor.y+24,now);
+        drawPacedEyes(actor,'runner',now);drawSpeedLabel(actor,actor.x+rw/2,actor.y+24,now);
       }else if(kind==='present'){
         let scale=1;if(actor.state==='opening'){const t=Math.min(1,(now-actor.openStart)/(actor.openAt-actor.openStart));scale=1+.35*Math.sin(t*Math.PI)}
         if(presentImage.complete&&presentImage.naturalWidth){ctx.save();ctx.translate(actor.x,actor.y);ctx.rotate(actor.angle);ctx.drawImage(presentImage,-actor.width*scale/2,-actor.height*scale/2,actor.width*scale,actor.height*scale);ctx.restore()}
@@ -222,6 +236,6 @@
     }
     requestAnimationFrame(frame);
   }
-  window.runnersDevAPI={runners:roster.runners.map(({id,name,rarity})=>({id,name,rarity})),cars:roster.cars.map(({id,name,rarity})=>({id,name,rarity})),spawnRunner:id=>addRunner(performance.now(),id),spawnCar:id=>addCar(performance.now(),id)};
+  window.runnersDevAPI={runners:roster.runners.map(({id,name,rarity,file})=>({id,name,rarity,icon:`assets/runners/${file}`})),cars:roster.cars.map(({id,name,rarity,file})=>({id,name,rarity,icon:`assets/cars/${file}`})),spawnRunner:id=>addRunner(performance.now(),id),spawnCar:id=>addCar(performance.now(),id)};
   requestAnimationFrame(frame);
 })();
