@@ -1,6 +1,6 @@
 # runners
 
-A small, static browser game. It has no JavaScript build step or runtime dependencies. Open `index.html` in a modern browser to play; the game stores coins and unlocks in browser localStorage (`road-runners-save`). All asset URLs are relative, so the project can also be served from a repository subpath such as GitHub Pages. For localhost-only tools, serve the folder with `python3 -m http.server 8000` and open `http://localhost:8000`.
+A small, static browser game. It has no JavaScript build step or runtime dependencies. Open `index.html` in a modern browser to play; the game stores coins and unlocks in browser localStorage (`road-runners-save`). All asset URLs are relative, so the project can also be served from a repository subpath such as GitHub Pages. The hidden DEV panel works in the hosted game too: type `DEV` and press Enter to spawn any runner or car.
 
 ## Publish as a `runners` repository
 

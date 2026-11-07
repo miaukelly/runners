@@ -149,7 +149,7 @@
   function releasePresents(owner,now){for(const present of presents)if(present.owner===owner){present.state='opening';present.openStart=now;present.openAt=now+260+Math.random()*180}}
   function spawnCoinsFrom(present){
     const count=1+Math.floor(Math.random()*3);
-    for(let i=0;i<count;i++)worldCoins.push({id:coinSequence++,lane:present.lane,x:present.x+(Math.random()-.5)*12,y:present.y-8,vx:(Math.random()-.5)*150,vy:-170-Math.random()*150,gravity:720,floorY:present.floorY,size:22,angle:(Math.random()-.5)*.7,spin:(Math.random()-.5)*7,bounces:0,state:'pop',value:5+Math.floor(Math.random()*46)});
+    for(let i=0;i<count;i++)worldCoins.push({id:coinSequence++,lane:present.lane,x:present.x+(Math.random()-.5)*12,y:present.y-8,vx:(Math.random()-.5)*150,vy:-170-Math.random()*150,gravity:720,floorY:present.floorY,size:28,angle:(Math.random()-.5)*.7,spin:(Math.random()-.5)*7,bounces:0,state:'pop',value:5+Math.floor(Math.random()*46)});
   }
   function counterTarget(){
     const icon=document.querySelector('.coin-image').getBoundingClientRect(),bounds=canvas.getBoundingClientRect();
@@ -216,10 +216,6 @@
     }
     requestAnimationFrame(frame);
   }
-  const localHosts=['localhost','127.0.0.1','[::1]'];
-  if(localHosts.includes(location.hostname)){
-    window.runnersDevAPI={runners:roster.runners.map(({id,name,rarity})=>({id,name,rarity})),cars:roster.cars.map(({id,name,rarity})=>({id,name,rarity})),spawnRunner:id=>addRunner(performance.now(),id),spawnCar:id=>addCar(performance.now(),id)};
-    const devScript=document.createElement('script');devScript.src='dev.js';devScript.async=false;devScript.onerror=()=>{};document.head.append(devScript);
-  }
+  window.runnersDevAPI={runners:roster.runners.map(({id,name,rarity})=>({id,name,rarity})),cars:roster.cars.map(({id,name,rarity})=>({id,name,rarity})),spawnRunner:id=>addRunner(performance.now(),id),spawnCar:id=>addCar(performance.now(),id)};
   requestAnimationFrame(frame);
 })();
