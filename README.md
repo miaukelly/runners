@@ -23,7 +23,7 @@ Then enable GitHub Pages for the `main` branch and repository root. The game ent
 
 For animated GIFs, install the helper dependency with `python3 -m pip install -r requirements.txt`, then run `python3 tools/extract-gifs.py` after adding the file. It exports transparent PNG frames and updates `assets/frames.js`; the game advances those frames itself for consistent animation in the canvas.
 
-Sounds and music live in `assets/audio/`. Engine and running loops play while their actors are on screen; the music loops quietly behind the game, cat meows play only for Cat, crashes play on collisions, and item pickups use `commonItem.mp3` for Common and Uncommon items or `goodItem.mp3` for higher rarities. A browser gesture is needed before the browser will allow audio playback.
+Sounds and music live in `assets/audio/`. Engine and running loops play while their actors are on screen; the music loops quietly behind the game, cat meows play only for Cat, and crashes play on collisions. Rarity toasts play `commonItem.mp3` for Common and Uncommon items or `goodItem.mp3` for higher rarities; runner reward coins fly from the toast to the counter. A browser gesture is needed before the browser will allow audio playback.
 
 Runner and car speeds vary independently. Most use their usual speed; larger speed changes are progressively rarer. Faster variants sometimes display a short-lived speed label and connector line.
 
