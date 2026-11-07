@@ -60,7 +60,7 @@
     running:new Audio('assets/audio/runningLoop.mp3'),
     music:new Audio('assets/audio/music.mp3')
   };
-  const loopVolumes={engine:.13,running:.14,music:.08},loopStates={};
+  const loopVolumes={engine:.13,running:.10,music:.08},loopStates={};
   for(const [key,audio] of Object.entries(sounds)){audio.loop=true;audio.volume=0;loopStates[key]={target:null,animation:0};}
   for(const audio of Object.values(sounds)){
     let previous=0;
@@ -131,6 +131,12 @@
         if(before===0||after===0||before*after<0){target.eyesStart=now;target.eyesUntil=now+2600}
       }
     }
+  }
+  function drawSkeletonEyes(actor){
+    if(!eyesImage.complete||!eyesImage.naturalWidth)return;
+    const drawWidth=Math.min(46,actor.width*.4),drawHeight=drawWidth*eyesImage.naturalHeight/eyesImage.naturalWidth;
+    const centerX=actor.x+actor.width*(actor.dir>0?.73:.27),centerY=actor.y+actor.height*.17;
+    ctx.drawImage(eyesImage,centerX-drawWidth/2,centerY-drawHeight/2,drawWidth,drawHeight);
   }
   function drawPacedEyes(actor,kind,now){
     if(!actor.eyesUntil||now>actor.eyesUntil||!eyesImage.complete||!eyesImage.naturalWidth)return;
@@ -205,7 +211,7 @@
         drawPacedEyes(actor,'car',now);drawSpeedLabel(actor,actor.x+actor.w/2,actor.drawY+12,now);
       }else if(kind==='runner'){
         const rw=actor.width,rh=actor.height;ctx.save();ctx.translate(actor.x+rw/2,actor.y+rh/2);ctx.rotate(actor.angle);if(Boolean(actor.type.flip)!==(actor.dir<0))ctx.scale(-1,1);const im=imageAt(actor.type,now);if(im?.complete&&im.naturalWidth)ctx.drawImage(im,-rw/2,-rh/2,rw,rh);ctx.restore();
-        drawPacedEyes(actor,'runner',now);drawSpeedLabel(actor,actor.x+rw/2,actor.y+24,now);
+        if(actor.type.id==='skeleton')drawSkeletonEyes(actor);drawPacedEyes(actor,'runner',now);drawSpeedLabel(actor,actor.x+rw/2,actor.y+24,now);
       }else if(kind==='present'){
         let scale=1;if(actor.state==='opening'){const t=Math.min(1,(now-actor.openStart)/(actor.openAt-actor.openStart));scale=1+.35*Math.sin(t*Math.PI)}
         if(presentImage.complete&&presentImage.naturalWidth){ctx.save();ctx.translate(actor.x,actor.y);ctx.rotate(actor.angle);ctx.drawImage(presentImage,-actor.width*scale/2,-actor.height*scale/2,actor.width*scale,actor.height*scale);ctx.restore()}
