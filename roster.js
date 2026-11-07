@@ -30,8 +30,8 @@ window.ROSTER = {
     { id:'glorp', name:'Glorp', file:'glorp.gif', rarity:'Legendary', weight:1.5, scale:1.25, aspect:1.00 },
     { id:'catbus', name:'Cat Bus', file:'catbus.gif', rarity:'Rare', weight:5, scale:1.15, aspect:1.00, flip:true },
     { id:'xpp', name:'XPP', file:'xpp.png', rarity:'Epic', weight:3, scale:1.00, aspect:1.78125 },
-    { id:'kitty', name:'Kitty', file:'kitty.png', rarity:'Rare', weight:6, scale:1.00, aspect:1.65625 },
-    { id:'clown', name:'Clown', file:'clown.gif', rarity:'Epic', weight:3, scale:1.00, aspect:1.00 },
+    { id:'kitty', name:'Kitty', file:'kitty.png', rarity:'Rare', weight:6, scale:1.00, aspect:1.65625, flip:true },
+    { id:'clown', name:'Clown', file:'clown.gif', rarity:'Epic', weight:3, scale:1.25, aspect:1.00 },
     { id:'carbert', name:'Carbert', file:'carbert.png', rarity:'Uncommon', weight:14, scale:1.00, aspect:0.78125 }
   ]
 };
