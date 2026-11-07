@@ -60,7 +60,7 @@
     running:new Audio('assets/audio/walkingLoop.mp3'),
     music:new Audio('assets/audio/music.mp3')
   };
-  const loopVolumes={engine:.13,running:.10,music:.08},loopStates={};
+  const loopVolumes={engine:.13,running:.30,music:.08},loopStates={};
   for(const [key,audio] of Object.entries(sounds)){audio.loop=true;audio.volume=0;loopStates[key]={target:null,animation:0};}
   for(const [key,audio] of Object.entries(sounds)){
     let previous=0;
@@ -130,7 +130,7 @@
       for(const target of [...carsOnRoad,...runnersOnRoad]){
         if(target===skeleton||target.type.id==='skeleton'||target.lane!==skeleton.lane)continue;
         const width=target.width||target.w||116,x0=target.prevX+width/2,x1=target.x+width/2,before=sx0-x0,after=sx1-x1;
-        if(before===0||after===0||before*after<0){target.eyesStart=now;target.eyesUntil=now+2600}
+        if(before===0||after===0||before*after<0){if(!target.eyesUntil||target.eyesUntil<=now)target.eyesStart=now;target.eyesUntil=Math.max(target.eyesUntil||0,now+2600)}
       }
     }
   }
@@ -148,18 +148,18 @@
   function drawPacedEyes(actor,kind,now){
     if(!actor.eyesUntil||now>actor.eyesUntil||!eyesImage.complete||!eyesImage.naturalWidth)return;
     const clamp=value=>Math.max(0,Math.min(1,value)),fadeIn=1-Math.pow(1-clamp((now-actor.eyesStart)/150),3),fadeOut=1-Math.pow(1-clamp((actor.eyesUntil-now)/380),3),alpha=Math.min(fadeIn,fadeOut);
-    let x,y,boxWidth,boxHeight;
+    let x,y,boxWidth,boxHeight,flipped=false,originX,originY;
     if(kind==='runner'){
       const source=actor.type.frames?.[0]||actor.type.img,bounds=getSpriteBounds(source),preset=eyeAnchors[actor.type.id];
       x=preset?.[0]??(bounds?(bounds.left+bounds.width*.71)/source.naturalWidth:.69);y=preset?.[1]??(bounds?(bounds.top+bounds.height*.17)/source.naturalHeight:.18);
-      const flipped=Boolean(actor.type.flip)!==(actor.dir<0);if(flipped)x=1-x;
-      boxWidth=actor.width;boxHeight=actor.height;
+      flipped=Boolean(actor.type.flip)!==(actor.dir<0);boxWidth=actor.width;boxHeight=actor.height;originX=actor.x;originY=actor.y;
     }else{
-      x=actor.dir>0?.78:.22;y=.34;boxWidth=actor.w;boxHeight=actor.h;
+      x=actor.dir>0?.78:.22;y=.34;boxWidth=actor.w;boxHeight=actor.h;originX=actor.x;originY=actor.drawY;
     }
     const drawWidth=Math.min(kind==='car'?64:58,Math.max(28,boxWidth*(kind==='car'?.29:.34))),drawHeight=drawWidth*eyesImage.naturalHeight/eyesImage.naturalWidth;
-    const cx=(kind==='car'?actor.x:actor.x)+boxWidth*x,cy=(kind==='car'?actor.drawY:actor.y)+boxHeight*y;
-    ctx.save();ctx.globalAlpha=alpha;ctx.translate(cx,cy);if(kind==='runner'&&actor.angle)ctx.rotate(actor.angle);ctx.drawImage(eyesImage,-drawWidth/2,-drawHeight/2,drawWidth,drawHeight);ctx.restore();
+    ctx.save();ctx.globalAlpha=alpha;ctx.translate(originX+boxWidth/2,originY+boxHeight/2);
+    if(kind==='runner'){if(actor.angle)ctx.rotate(actor.angle);if(flipped)ctx.scale(-1,1)}
+    ctx.drawImage(eyesImage,boxWidth*(x-.5)-drawWidth/2,boxHeight*(y-.5)-drawHeight/2,drawWidth,drawHeight);ctx.restore();
   }
   function hit(r,c){return r.x+r.width*.68>c.x+26&&r.x+r.width*.22<c.x+c.w-20&&Math.abs((r.y+r.height*.65)-(c.drawY+c.h*.58))<60}
   function reward(item){return item.rarity==='Common'?5:item.rarity==='Uncommon'?9:item.rarity==='Rare'?16:item.rarity==='Epic'?28:item.rarity==='Legendary'?60:120}
