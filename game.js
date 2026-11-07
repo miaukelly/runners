@@ -6,6 +6,7 @@
   const imageAt=(item,now)=>{if(!item.frames)return item.img;const cycle=item.durations.reduce((a,b)=>a+b,0);let t=now%cycle;for(let i=0;i<item.frames.length;i++){if(t<item.durations[i])return item.frames[i];t-=item.durations[i]}return item.frames[0]};
   const coinData=window.GIF_FRAMES?.coin,coinAnimation=coinData?{frames:coinData.frames.map(src=>Object.assign(new Image(),{src})),durations:coinData.durations}:null;
   const presentImage=Object.assign(new Image(),{src:'assets/ui/present.png'});
+  const eyesImage=Object.assign(new Image(),{src:'assets/ui/eyes.png'});
   const runners=loadPool(roster.runners,'runners'),cars=loadPool(roster.cars,'cars');
   const coinsEl=document.querySelector('#coins'),toast=document.querySelector('#toast'),soundButton=document.querySelector('#sound'),currencyElement=document.querySelector('.currency');
   const indexOverlay=document.querySelector('#indexOverlay'),indexContent=document.querySelector('#indexContent'),indexButton=document.querySelector('#openIndex');
@@ -79,8 +80,9 @@
     const needs={engine:carsOnRoad.length>0,running:runnersOnRoad.some(r=>!r.hit),music:true};
     for(const key of Object.keys(sounds))fadeLoop(key,soundOn&&audioReady&&needs[key]);
   }
-  function effect(file,volume){if(!soundOn||!audioReady)return;const audio=new Audio(`assets/audio/${file}`);audio.volume=volume;audio.playbackRate=pitch();audio.play().catch(()=>{});audio.addEventListener('ended',()=>audio.remove(),{once:true})}
+  function effect(file,volume,force=false){if((!soundOn&&!force)||!audioReady)return;const audio=new Audio(`assets/audio/${file}`);audio.volume=volume;audio.playbackRate=pitch();audio.play().catch(()=>{});audio.addEventListener('ended',()=>audio.remove(),{once:true})}
   function playRaritySound(item){effect(item.rarity==='Common'||item.rarity==='Uncommon'?'commonItem.mp3':'goodItem.mp3',.42)}
+  document.addEventListener('click',event=>{const button=event.target.closest('.game button');if(!button)return;audioReady=true;const turningSoundOn=button===soundButton&&!soundOn;if(soundOn||turningSoundOn)effect('commonItem.mp3',.22,true)},true);
   function queueToastCoins(amount){
     const toastBounds=toast.getBoundingClientRect(),canvasBounds=canvas.getBoundingClientRect(),startX=(toastBounds.left+toastBounds.width/2-canvasBounds.left)*W/canvasBounds.width,startY=(toastBounds.bottom-canvasBounds.top)*H/canvasBounds.height;
     const count=Math.min(3,Math.max(1,Math.ceil(amount/25))),base=Math.floor(amount/count),remainder=amount%count,now=performance.now();
@@ -95,12 +97,13 @@
     const height=116*type.scale,width=height*(type.aspect||1);
     const startX=dir>0?-width-24:W+24,endX=dir>0?W+24:-width-24,dropCount=type.id==='santa'?1+Math.floor(Math.random()*5):0;
     const dropMarks=Array.from({length:dropCount},()=>.12+Math.random()*.76).sort((a,b)=>a-b);
-    runnersOnRoad.push({type,dir,lane,x:startX,startX,endX,dropMarks,dropIndex:0,y:lane===0?745:810,vy:0,vx:dir*variation.speed,width,height,fastStart:variation.fast?now:0,fastUntil:variation.fast?now+4500:0,kmh:Math.round(variation.speed*.12),angle:0,spinning:0,passed:false,hit:false,scale:type.scale});
+    runnersOnRoad.push({type,dir,lane,x:startX,prevX:startX,startX,endX,dropMarks,dropIndex:0,y:lane===0?745:810,vy:0,vx:dir*variation.speed,width,height,fastStart:variation.fast?now:0,fastUntil:variation.fast?now+4500:0,kmh:Math.round(variation.speed*.12),angle:0,spinning:0,passed:false,hit:false,scale:type.scale});
   }
   function addCar(now){
     const type=weighted(cars),dir=Math.random()<.5?-1:1,lane=Math.random()<.5?0:1;
     const height=92*type.scale,width=height*(type.aspect||1),laneCenter=lane===0?811:876,roadY=laneCenter-height/2,variation=variedSpeed(285+Math.random()*85);
-    carsOnRoad.push({type,dir,lane,x:dir>0?-width-20:W+20,y:roadY,drawY:roadY,w:width,h:height,vx:dir*variation.speed,fastStart:variation.fast?now:0,fastUntil:variation.fast?now+4500:0,kmh:Math.round(variation.speed*.22),bob:Math.random()*Math.PI*2});
+    const startX=dir>0?-width-20:W+20;
+    carsOnRoad.push({type,dir,lane,x:startX,prevX:startX,y:roadY,drawY:roadY,w:width,h:height,vx:dir*variation.speed,fastStart:variation.fast?now:0,fastUntil:variation.fast?now+4500:0,kmh:Math.round(variation.speed*.22),bob:Math.random()*Math.PI*2});
     if(type.id==='catmobile')effect('meow.mp3',.4);
     carTimer=6.5+Math.random()*2.4;
   }
@@ -115,6 +118,24 @@
     ctx.strokeStyle='#ffe58b';ctx.lineWidth=1.7;ctx.beginPath();ctx.moveTo(lineX-cx,height/2);ctx.lineTo(x-cx,y-cy);ctx.stroke();
     ctx.fillStyle='#101a2de8';ctx.fillRect(-width/2,-height/2,width,height);ctx.strokeStyle='#ffe58b';ctx.lineWidth=1.2;ctx.strokeRect(-width/2,-height/2,width,height);
     ctx.fillStyle='#fff1b5';ctx.textBaseline='middle';ctx.fillText(text,-width/2+8,0);ctx.restore();
+  }
+  function markSkeletonPaces(now){
+    const skeletons=runnersOnRoad.filter(actor=>actor.type.id==='skeleton'&&!actor.hit);
+    for(const skeleton of skeletons){
+      const sx0=skeleton.prevX+skeleton.width/2,sx1=skeleton.x+skeleton.width/2;
+      for(const target of [...carsOnRoad,...runnersOnRoad]){
+        if(target===skeleton||target.type.id==='skeleton'||target.lane!==skeleton.lane)continue;
+        const width=target.width||target.w||116,x0=target.prevX+width/2,x1=target.x+width/2,before=sx0-x0,after=sx1-x1;
+        if(before===0||after===0||before*after<0){target.eyesStart=now;target.eyesUntil=now+2600}
+      }
+    }
+  }
+  function drawPacedEyes(actor,kind,now){
+    if(!actor.eyesUntil||now>actor.eyesUntil||!eyesImage.complete||!eyesImage.naturalWidth)return;
+    const clamp=value=>Math.max(0,Math.min(1,value)),fadeIn=1-Math.pow(1-clamp((now-actor.eyesStart)/150),3),fadeOut=1-Math.pow(1-clamp((actor.eyesUntil-now)/380),3),alpha=Math.min(fadeIn,fadeOut);
+    const targetWidth=kind==='car'?actor.w:actor.width,drawWidth=Math.min(72,Math.max(38,targetWidth*.42)),drawHeight=drawWidth*eyesImage.naturalHeight/eyesImage.naturalWidth;
+    const centerX=kind==='car'?actor.x+actor.w/2:actor.x+actor.width/2,centerY=kind==='car'?actor.drawY+actor.h*.32:actor.y+actor.height*.3;
+    ctx.save();ctx.globalAlpha=alpha;ctx.drawImage(eyesImage,centerX-drawWidth/2,centerY-drawHeight/2,drawWidth,drawHeight);ctx.restore();
   }
   function hit(r,c){return r.x+r.width*.68>c.x+26&&r.x+r.width*.22<c.x+c.w-20&&Math.abs((r.y+r.height*.65)-(c.drawY+c.h*.58))<60}
   function reward(item){return item.rarity==='Common'?5:item.rarity==='Uncommon'?9:item.rarity==='Rare'?16:item.rarity==='Epic'?28:item.rarity==='Legendary'?60:120}
@@ -160,29 +181,29 @@
     if(scene.complete&&scene.naturalWidth){ctx.drawImage(scene,-bgOffset,0,bgWidth,H);ctx.drawImage(scene,bgWidth-bgOffset,0,bgWidth,H)}
     else{ctx.fillStyle='#4f93dc';ctx.fillRect(0,0,W,H);ctx.fillStyle='#343c50';ctx.fillRect(0,760,W,181)}
     for(let i=carsOnRoad.length-1;i>=0;i--){
-      const c=carsOnRoad[i];c.x+=c.vx*dt;c.drawY=c.y+Math.sin(now*.004+c.bob)*3.2;
+      const c=carsOnRoad[i];c.prevX=c.x;c.x+=c.vx*dt;c.drawY=c.y+Math.sin(now*.004+c.bob)*3.2;
       if(c.dir>0&&c.x>W+20||c.dir<0&&c.x<-c.w-20){const isNew=!unlockedCars.has(c.type.id);unlockedCars.add(c.type.id);persist();if(isNew)popToast(c.type,'UNLOCKED',cars);if(indexOpen&&indexTab==='cars')renderIndex();carsOnRoad.splice(i,1)}
     }
     for(let i=runnersOnRoad.length-1;i>=0;i--){
       const r=runnersOnRoad[i],rw=r.width,rh=r.height;
       if(!r.hit){
-        r.x+=r.vx*dt;
+        r.prevX=r.x;r.x+=r.vx*dt;
         if(r.type.id==='santa'&&r.dropIndex<r.dropMarks.length){const progress=Math.max(0,Math.min(1,(r.x-r.startX)/(r.endX-r.startX)));while(r.dropIndex<r.dropMarks.length&&progress>=r.dropMarks[r.dropIndex]){dropPresent(r);r.dropIndex++}}
         if((r.dir<0&&r.x<-rw)||(r.dir>0&&r.x>W)){
           r.passed=true;unlocked.add(r.type.id);const prize=reward(r.type);if(r.type.id==='santa')releasePresents(r,now);persist();if(indexOpen&&indexTab==='runners')renderIndex();popToast(r.type,`UNLOCKED +${prize}¢`,runners,prize);runnerTimer=Math.max(runnerTimer,4.3);
         }else for(const c of carsOnRoad){if(hit(r,c)){r.hit=true;removePresents(r);r.fastUntil=0;r.spinning=(Math.random()<.5?-1:1)*(18+Math.random()*22);r.vx=(Math.random()-.5)*1850;r.vy=-1150-Math.random()*650;effect('crash.mp3',.46);popToast(c.type,'TRAFFIC',cars);break}}
-      }else{r.x+=r.vx*dt;r.y+=r.vy*dt;r.vy+=1550*dt;r.angle+=r.spinning*dt;if(r.x<-350||r.x>W+350||r.y>H+250){runnersOnRoad.splice(i,1);continue}}
+      }else{r.prevX=r.x;r.x+=r.vx*dt;r.y+=r.vy*dt;r.vy+=1550*dt;r.angle+=r.spinning*dt;if(r.x<-350||r.x>W+350||r.y>H+250){runnersOnRoad.splice(i,1);continue}}
       if(r.passed){runnersOnRoad.splice(i,1);continue}
     }
-    updateLoot(now,dt);
+    markSkeletonPaces(now);updateLoot(now,dt);
     const drawables=[...carsOnRoad.map(actor=>({actor,kind:'car',layer:0})),...runnersOnRoad.map(actor=>({actor,kind:'runner',layer:1})),...presents.map(actor=>({actor,kind:'present',layer:2})),...worldCoins.map(actor=>({actor,kind:'coin',layer:3}))].sort((a,b)=>a.actor.lane-b.actor.lane||a.layer-b.layer);
     for(const {actor,kind} of drawables){
       if(kind==='car'){
         const im=imageAt(actor.type,now);if(im?.complete&&im.naturalWidth){const flip=Boolean(actor.type.flip)!==(actor.dir<0);if(flip){ctx.save();ctx.translate(actor.x+actor.w,actor.drawY);ctx.scale(-1,1);ctx.drawImage(im,0,0,actor.w,actor.h);ctx.restore()}else ctx.drawImage(im,actor.x,actor.drawY,actor.w,actor.h)}
-        drawSpeedLabel(actor,actor.x+actor.w/2,actor.drawY+12,now);
+        drawPacedEyes(actor,'car',now);drawSpeedLabel(actor,actor.x+actor.w/2,actor.drawY+12,now);
       }else if(kind==='runner'){
         const rw=actor.width,rh=actor.height;ctx.save();ctx.translate(actor.x+rw/2,actor.y+rh/2);ctx.rotate(actor.angle);if(Boolean(actor.type.flip)!==(actor.dir<0))ctx.scale(-1,1);const im=imageAt(actor.type,now);if(im?.complete&&im.naturalWidth)ctx.drawImage(im,-rw/2,-rh/2,rw,rh);ctx.restore();
-        drawSpeedLabel(actor,actor.x+rw/2,actor.y+24,now);
+        drawPacedEyes(actor,'runner',now);drawSpeedLabel(actor,actor.x+rw/2,actor.y+24,now);
       }else if(kind==='present'){
         let scale=1;if(actor.state==='opening'){const t=Math.min(1,(now-actor.openStart)/(actor.openAt-actor.openStart));scale=1+.35*Math.sin(t*Math.PI)}
         if(presentImage.complete&&presentImage.naturalWidth){ctx.save();ctx.translate(actor.x,actor.y);ctx.rotate(actor.angle);ctx.drawImage(presentImage,-actor.size*scale/2,-actor.size*scale/2,actor.size*scale,actor.size*scale);ctx.restore()}
