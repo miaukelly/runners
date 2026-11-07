@@ -91,16 +91,18 @@
   document.addEventListener('pointerdown',()=>{audioReady=true;syncLoops()},{once:true});
   document.addEventListener('keydown',()=>{audioReady=true;syncLoops()},{once:true});
   soundButton.addEventListener('click',()=>{soundOn=!soundOn;soundButton.classList.toggle('off',!soundOn);syncLoops()});
-  function addRunner(now){
-    const type=weighted(runners),dir=Math.random()<.5?-1:1,lane=Math.random()<.5?0:1;
+  function addRunner(now,forcedId){
+    const type=forcedId?runners.find(item=>item.id===forcedId):weighted(runners);if(!type)return;
+    const dir=Math.random()<.5?-1:1,lane=Math.random()<.5?0:1;
     const variation=variedSpeed(215+Math.random()*55);
     const height=116*type.scale,width=height*(type.aspect||1);
     const startX=dir>0?-width-24:W+24,endX=dir>0?W+24:-width-24,dropCount=type.id==='santa'?1+Math.floor(Math.random()*5):0;
     const dropMarks=Array.from({length:dropCount},()=>.12+Math.random()*.76).sort((a,b)=>a-b);
     runnersOnRoad.push({type,dir,lane,x:startX,prevX:startX,startX,endX,dropMarks,dropIndex:0,y:lane===0?745:810,vy:0,vx:dir*variation.speed,width,height,fastStart:variation.fast?now:0,fastUntil:variation.fast?now+4500:0,kmh:Math.round(variation.speed*.12),angle:0,spinning:0,passed:false,hit:false,scale:type.scale});
   }
-  function addCar(now){
-    const type=weighted(cars),dir=Math.random()<.5?-1:1,lane=Math.random()<.5?0:1;
+  function addCar(now,forcedId){
+    const type=forcedId?cars.find(item=>item.id===forcedId):weighted(cars);if(!type)return;
+    const dir=Math.random()<.5?-1:1,lane=Math.random()<.5?0:1;
     const height=92*type.scale,width=height*(type.aspect||1),laneCenter=lane===0?811:876,roadY=laneCenter-height/2,variation=variedSpeed(285+Math.random()*85);
     const startX=dir>0?-width-20:W+20;
     carsOnRoad.push({type,dir,lane,x:startX,prevX:startX,y:roadY,drawY:roadY,w:width,h:height,vx:dir*variation.speed,fastStart:variation.fast?now:0,fastUntil:variation.fast?now+4500:0,kmh:Math.round(variation.speed*.22),bob:Math.random()*Math.PI*2});
@@ -213,6 +215,11 @@
       }
     }
     requestAnimationFrame(frame);
+  }
+  const localHosts=['localhost','127.0.0.1','[::1]'];
+  if(localHosts.includes(location.hostname)){
+    window.runnersDevAPI={runners:roster.runners.map(({id,name,rarity})=>({id,name,rarity})),cars:roster.cars.map(({id,name,rarity})=>({id,name,rarity})),spawnRunner:id=>addRunner(performance.now(),id),spawnCar:id=>addCar(performance.now(),id)};
+    const devScript=document.createElement('script');devScript.src='dev.js';devScript.async=false;devScript.onerror=()=>{};document.head.append(devScript);
   }
   requestAnimationFrame(frame);
 })();
