@@ -140,8 +140,8 @@
   function hit(r,c){return r.x+r.width*.68>c.x+26&&r.x+r.width*.22<c.x+c.w-20&&Math.abs((r.y+r.height*.65)-(c.drawY+c.h*.58))<60}
   function reward(item){return item.rarity==='Common'?5:item.rarity==='Uncommon'?9:item.rarity==='Rare'?16:item.rarity==='Epic'?28:item.rarity==='Legendary'?60:120}
   function dropPresent(r){
-    const size=24,presentX=r.dir>0?r.x+r.width*.18:r.x+r.width*.82;
-    presents.push({owner:r,lane:r.lane,x:presentX,y:r.y+r.height*.55,vx:(Math.random()-.5)*45,vy:30+Math.random()*35,gravity:700,angle:0,spin:(Math.random()-.5)*3,size,floorY:r.lane===0?827:927,state:'falling'});
+    const size=r.height*.70,presentX=r.dir>0?r.x+r.width*.18:r.x+r.width*.82,presentY=r.lane===0?r.y+r.height*.25:r.y+r.height*.42;
+    presents.push({owner:r,lane:r.lane,x:presentX,y:presentY,vx:(Math.random()-.5)*55,vy:35+Math.random()*35,gravity:720,angle:0,spin:(Math.random()-.5)*3,size,floorY:r.lane===0?827:927,bounces:0,state:'falling'});
   }
   function removePresents(owner){for(let i=presents.length-1;i>=0;i--)if(presents[i].owner===owner)presents.splice(i,1)}
   function releasePresents(owner,now){for(const present of presents)if(present.owner===owner){present.state='opening';present.openStart=now;present.openAt=now+260+Math.random()*180}}
@@ -156,7 +156,7 @@
   function updateLoot(now,dt){
     for(let i=presents.length-1;i>=0;i--){
       const p=presents[i];
-      if(p.state==='falling'){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=p.gravity*dt;p.angle+=p.spin*dt;if(p.y+p.size/2>=p.floorY){p.y=p.floorY-p.size/2;p.vy=0;p.vx*=.45;p.spin=0;p.state='ground'}}
+      if(p.state==='falling'){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=p.gravity*dt;p.angle+=p.spin*dt;if(p.y+p.size/2>=p.floorY){p.y=p.floorY-p.size/2;if(p.bounces===0&&Math.abs(p.vy)>55){p.vy=-Math.abs(p.vy)*.28;p.vx*=.55;p.spin*=.45;p.bounces++}else{p.vy=0;p.vx*=.45;p.spin=0;p.state='ground'}}}
       else if(p.state==='opening'&&now>=p.openAt){spawnCoinsFrom(p);presents.splice(i,1)}
     }
     for(let i=worldCoins.length-1;i>=0;i--){
