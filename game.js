@@ -80,6 +80,7 @@
     for(const key of Object.keys(sounds))fadeLoop(key,soundOn&&audioReady&&needs[key]);
   }
   function effect(file,volume){if(!soundOn||!audioReady)return;const audio=new Audio(`assets/audio/${file}`);audio.volume=volume;audio.playbackRate=pitch();audio.play().catch(()=>{});audio.addEventListener('ended',()=>audio.remove(),{once:true})}
+  function playRaritySound(item){effect(item.rarity==='Common'||item.rarity==='Uncommon'?'commonItem.mp3':'goodItem.mp3',.42)}
   document.addEventListener('pointerdown',()=>{audioReady=true;syncLoops()},{once:true});
   document.addEventListener('keydown',()=>{audioReady=true;syncLoops()},{once:true});
   soundButton.addEventListener('click',()=>{soundOn=!soundOn;soundButton.classList.toggle('off',!soundOn);syncLoops()});
@@ -155,7 +156,7 @@
     else{ctx.fillStyle='#4f93dc';ctx.fillRect(0,0,W,H);ctx.fillStyle='#343c50';ctx.fillRect(0,760,W,181)}
     for(let i=carsOnRoad.length-1;i>=0;i--){
       const c=carsOnRoad[i];c.x+=c.vx*dt;c.drawY=c.y+Math.sin(now*.004+c.bob)*3.2;
-      if(c.dir>0&&c.x>W+20||c.dir<0&&c.x<-c.w-20){unlockedCars.add(c.type.id);persist();if(indexOpen&&indexTab==='cars')renderIndex();carsOnRoad.splice(i,1)}
+      if(c.dir>0&&c.x>W+20||c.dir<0&&c.x<-c.w-20){const isNew=!unlockedCars.has(c.type.id);unlockedCars.add(c.type.id);persist();if(isNew)playRaritySound(c.type);if(indexOpen&&indexTab==='cars')renderIndex();carsOnRoad.splice(i,1)}
     }
     for(let i=runnersOnRoad.length-1;i>=0;i--){
       const r=runnersOnRoad[i],rw=r.width,rh=r.height;
@@ -163,7 +164,7 @@
         r.x+=r.vx*dt;
         if(r.type.id==='santa'&&r.dropIndex<r.dropMarks.length){const progress=Math.max(0,Math.min(1,(r.x-r.startX)/(r.endX-r.startX)));while(r.dropIndex<r.dropMarks.length&&progress>=r.dropMarks[r.dropIndex]){dropPresent(r);r.dropIndex++}}
         if((r.dir<0&&r.x<-rw)||(r.dir>0&&r.x>W)){
-          r.passed=true;unlocked.add(r.type.id);const prize=reward(r.type);grantCoins(prize);if(r.type.id==='santa')releasePresents(r,now);persist();if(indexOpen&&indexTab==='runners')renderIndex();popToast(r.type,`UNLOCKED +${prize}¢`,runners);runnerTimer=Math.max(runnerTimer,4.3);
+          r.passed=true;unlocked.add(r.type.id);const prize=reward(r.type);grantCoins(prize);if(r.type.id==='santa')releasePresents(r,now);persist();if(indexOpen&&indexTab==='runners')renderIndex();playRaritySound(r.type);popToast(r.type,`UNLOCKED +${prize}¢`,runners);runnerTimer=Math.max(runnerTimer,4.3);
         }else for(const c of carsOnRoad){if(hit(r,c)){r.hit=true;removePresents(r);r.fastUntil=0;r.spinning=(Math.random()<.5?-1:1)*(18+Math.random()*22);r.vx=(Math.random()-.5)*1850;r.vy=-1150-Math.random()*650;effect('crash.mp3',.46);popToast(c.type,'TRAFFIC',cars);break}}
       }else{r.x+=r.vx*dt;r.y+=r.vy*dt;r.vy+=1550*dt;r.angle+=r.spinning*dt;if(r.x<-350||r.x>W+350||r.y>H+250){runnersOnRoad.splice(i,1);continue}}
       if(r.passed){runnersOnRoad.splice(i,1);continue}
